@@ -3,6 +3,7 @@ package com.whatchasay.screentouchblocker;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -61,12 +62,15 @@ public class MainActivity extends AppCompatActivity {
                 notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
                 notificationManager.createNotificationChannel(notificationChannel);
 
+                Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
+                //notificationIntent.putExtra("flag",1);
+                PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 0, notificationIntent, 0);
 
                 Notification.Builder builder = new Notification.Builder(getApplicationContext(), "channel_id")
                         .setContentTitle("MYTEST_TITLE")
                         .setContentText("MYTEST_TEXT")
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setAutoCancel(true);
+                        .setContentIntent(pendingIntent);
 
                 notificationManager.notify(0,builder.build());
             }
