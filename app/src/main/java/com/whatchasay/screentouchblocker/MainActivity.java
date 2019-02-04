@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,8 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
+    NotificationManager notificationManager;
+    String CHANNEL_ID = "channel_id";
     Button btn;
 
     @Override
@@ -34,48 +37,28 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-//        WindowManager mWm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-//        LayoutInflater mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//        View mView = mInflater.inflate(R.layout.wlayout, null);
-//
-//        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-//                WindowManager.LayoutParams.WRAP_CONTENT,//MATCH_PARENT
-//                WindowManager.LayoutParams.WRAP_CONTENT,//MATCH_PARENT
-//                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-//                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-//                        | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-//                PixelFormat.TRANSLUCENT);
-//        mWm.addView(mView,params);
+        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        createNotificationChannel();
 
         btn = (Button)findViewById(R.id.btn);
-
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                NotificationChannel notificationChannel = new NotificationChannel("channel_id", "channel_name", NotificationManager.IMPORTANCE_DEFAULT);
-                notificationChannel.setDescription("channel description");
-                notificationChannel.enableLights(true);
-                notificationChannel.setLightColor(Color.GREEN);
-                notificationChannel.enableVibration(true);
-                notificationChannel.setVibrationPattern(new long[]{100, 200, 100, 200});
-                notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-                notificationManager.createNotificationChannel(notificationChannel);
 
                 Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
-                //notificationIntent.putExtra("flag",1);
-                PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 0, notificationIntent, 0);
-
-                Notification.Builder builder = new Notification.Builder(getApplicationContext(), "channel_id")
-                        .setContentTitle("MYTEST_TITLE")
-                        .setContentText("MYTEST_TEXT")
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentIntent(pendingIntent);
-
-                notificationManager.notify(0,builder.build());
+                startForegroundService(notificationIntent);
             }
         });
+    }
 
+    private void createNotificationChannel() {
+        CharSequence name = getString(R.string.channel_name);
+        String description = getString(R.string.channel_description);
 
+        NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT);
+        notificationChannel.setDescription(description);
+
+        notificationManager.createNotificationChannel(notificationChannel);
     }
 }
