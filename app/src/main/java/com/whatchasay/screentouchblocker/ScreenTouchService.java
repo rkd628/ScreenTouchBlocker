@@ -69,6 +69,7 @@ public class ScreenTouchService extends Service {
 
         boolean fromNotification = intent.getBooleanExtra("fromNotification",false);
         boolean fromButton = intent.getBooleanExtra("fromButton", false);
+        boolean fromQuickPanel = intent.getBooleanExtra("fromQuickPanel", false);
 
         if (fromNotification) {
             Log.d(TAG, "fromNotification");
@@ -94,6 +95,25 @@ public class ScreenTouchService extends Service {
 
             boolean turnsOn = intent.getBooleanExtra("turnsOn", false);
             if (!turnsOn) {
+                stopSelf();
+            }
+        } else if (fromQuickPanel) {
+            Log.d(TAG, "fromQuickPanel");
+
+            boolean turnsOn = intent.getBooleanExtra("turnsOn", false);
+            if (turnsOn) {
+                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                        PixelFormat.TRANSLUCENT);
+
+                mWindowManager.addView(mView, params);
+            } else {
+                mWindowManager.removeView(mView);
+
                 stopSelf();
             }
         }

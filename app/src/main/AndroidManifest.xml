@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/sct_launcher"
@@ -21,6 +23,17 @@
         </activity>
 
         <service android:name=".ScreenTouchService"/>
+
+        <service
+            android:name=".ScreenTouchBlockerTileService"
+            android:label="ScreenTouchBlocker"
+            android:icon="@mipmap/sct_quick"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
 
     </application>
 
