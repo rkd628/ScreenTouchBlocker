@@ -22,15 +22,14 @@ import android.view.WindowManager;
 
 public class ScreenTouchService extends Service {
 
-    private String TAG = "ScreenTouchService";
+    private String TAG = "seokil::ScreenTouchService";
 
-    WindowManager mWm;
+    WindowManager mWindowManager;
     LayoutInflater mInflater;
     View mView;
 
     private String CHANNEL_ID = "channel_id";
-    private int flag;
-    private int fromNotiFlag;
+    private int NotificationID = 1;
 
     @Nullable
     @Override
@@ -40,55 +39,61 @@ public class ScreenTouchService extends Service {
 
     @Override
     public void onCreate() {
-        // The service is being created
-        mWm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        Log.d(TAG, "ScreenTouchService onCreate()");
+
+        mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mView = mInflater.inflate(R.layout.wlayout, null);
-        flag = 1;
-        fromNotiFlag = 1;
 
         Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
         notificationIntent.putExtra("fromNotification", true);
+
         PendingIntent pendingIntent = PendingIntent.getForegroundService(getApplicationContext(), 0, notificationIntent, 0 );
         Notification.Builder builder = new Notification.Builder(getApplicationContext(), CHANNEL_ID)
-                .setContentTitle("MYTEST_TITLE")
-                .setContentText("MYTEST_TEXT")
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(getString(R.string.notification_title))
+                .setContentText(getString(R.string.notification_content))
+                .setSmallIcon(R.mipmap.sct_launcher)
                 .setContentIntent(pendingIntent);
 
-        startForeground(1, builder.build());
+        startForeground(NotificationID, builder.build());
     }
 
     @Override
     public void onDestroy() {
-        // The service is no longer used and is being destroyed
+        Log.d(TAG, "ScreenTouchService onDestroy()");
     }
-
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // The service is starting, due to a call to startService()
+        Log.d(TAG, "onStartCommand intent = " + intent + " flags = " + flags + " startId = " + startId);
 
         boolean fromNotification = intent.getBooleanExtra("fromNotification",false);
+        boolean fromButton = intent.getBooleanExtra("fromButton", false);
+
         if (fromNotification) {
-            if (fromNotiFlag == 1) {
+            Log.d(TAG, "fromNotification");
+
+            boolean viewExist = (mView.getParent() != null);
+            Log.d(TAG, "viewExist = " + viewExist);
+
+            if (viewExist) {
+                mWindowManager.removeView(mView);
+            } else {
                 WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                        WindowManager.LayoutParams.MATCH_PARENT,//MATCH_PARENT
-                        WindowManager.LayoutParams.MATCH_PARENT,//MATCH_PARENT
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
                         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                         PixelFormat.TRANSLUCENT);
-                fromNotiFlag = 0;
-                mWm.addView(mView, params);
-            } else {
-                fromNotiFlag = 1;
-                mWm.removeView(mView);
+
+                mWindowManager.addView(mView, params);
             }
-        } else {
-            if (flag == 1) {
-                flag = 0;
-            } else {
+        } else if (fromButton) {
+            Log.d(TAG, "fromButton");
+
+            boolean turnsOn = intent.getBooleanExtra("turnsOn", false);
+            if (!turnsOn) {
                 stopSelf();
             }
         }

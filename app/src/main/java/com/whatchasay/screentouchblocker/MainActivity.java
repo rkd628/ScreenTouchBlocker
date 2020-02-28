@@ -1,5 +1,6 @@
 package com.whatchasay.screentouchblocker;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -14,12 +15,15 @@ import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
+
+    private String TAG = "seokil::MainActivity";
 
     NotificationManager notificationManager;
     String CHANNEL_ID = "channel_id";
@@ -38,15 +42,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
         createNotificationChannel();
 
         btn = (Button)findViewById(R.id.btn);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG,"onClick()");
+
+                boolean turnsOn = !isScreenTouchServiceRunning();
+                Log.d(TAG,"onClick() turnsOn = " + turnsOn);
 
                 Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
+                notificationIntent.putExtra("fromButton", true);
+                notificationIntent.putExtra("turnsOn", turnsOn);
+
                 startForegroundService(notificationIntent);
             }
         });
@@ -60,5 +70,15 @@ public class MainActivity extends AppCompatActivity {
         notificationChannel.setDescription(description);
 
         notificationManager.createNotificationChannel(notificationChannel);
+    }
+
+    private boolean isScreenTouchServiceRunning() {
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE)) {
+            if (ScreenTouchService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
