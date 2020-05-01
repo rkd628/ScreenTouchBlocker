@@ -1,8 +1,6 @@
-package com.whatchasay.screentouchblocker;
+package com.saykangstudio.screentouchblocker;
 
 import android.app.ActivityManager;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.service.quicksettings.Tile;
@@ -10,10 +8,6 @@ import android.service.quicksettings.TileService;
 import android.util.Log;
 
 import java.lang.reflect.Method;
-
-/**
- * Created by seokil on 20. 2. 29.
- */
 
 public class ScreenTouchBlockerTileService extends TileService {
 
@@ -95,3 +89,4 @@ public class ScreenTouchBlockerTileService extends TileService {
     }
 
 }
+

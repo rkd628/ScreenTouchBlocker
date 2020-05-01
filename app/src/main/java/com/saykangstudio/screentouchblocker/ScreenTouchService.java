@@ -1,24 +1,18 @@
-package com.whatchasay.screentouchblocker;
+package com.saykangstudio.screentouchblocker;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 
-/**
- * Created by seokil on 18. 9. 27.
- */
+import androidx.annotation.Nullable;
 
 public class ScreenTouchService extends Service {
 
@@ -124,3 +118,4 @@ public class ScreenTouchService extends Service {
         return Service.START_STICKY;
     }
 }
+
