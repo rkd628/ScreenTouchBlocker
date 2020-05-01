@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -38,6 +40,16 @@ public class ScreenTouchService extends Service {
         mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mView = mInflater.inflate(R.layout.wlayout, null);
+
+        ImageView brightButton = mView.findViewById(R.id.BrightBtn);
+        brightButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getApplicationContext(),"TEST", Toast.LENGTH_LONG).show();
+            }
+        });
+
+
 
         Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
         notificationIntent.putExtra("fromNotification", true);
@@ -81,8 +93,9 @@ public class ScreenTouchService extends Service {
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                         PixelFormat.TRANSLUCENT);
 
+
                 mView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        |View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
                 mWindowManager.addView(mView, params);
             }
@@ -104,6 +117,9 @@ public class ScreenTouchService extends Service {
                         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                         PixelFormat.TRANSLUCENT);
+
+                // support cutout (notch)
+                params.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 
                 mView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         |View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
