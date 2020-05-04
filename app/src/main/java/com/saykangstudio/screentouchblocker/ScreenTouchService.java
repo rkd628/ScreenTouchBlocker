@@ -5,13 +5,18 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -23,6 +28,9 @@ public class ScreenTouchService extends Service {
     WindowManager mWindowManager;
     LayoutInflater mInflater;
     View mView;
+    ImageView mBrightButton;
+    SeekBar mSeekBar;
+    STBHandler mSTBHandler;
 
     private String CHANNEL_ID = "channel_id";
     private int NotificationID = 1;
@@ -41,14 +49,42 @@ public class ScreenTouchService extends Service {
         mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mView = mInflater.inflate(R.layout.wlayout, null);
 
-        ImageView brightButton = mView.findViewById(R.id.BrightBtn);
-        brightButton.setOnClickListener(new View.OnClickListener() {
+        mBrightButton = mView.findViewById(R.id.BrightBtn);
+        mBrightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(),"TEST", Toast.LENGTH_LONG).show();
+                mSeekBar.setVisibility(View.VISIBLE);
+                mBrightButton.setVisibility(View.INVISIBLE);
+
+                mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
             }
         });
 
+        mSeekBar = mView.findViewById(R.id.BrightSeekBar);
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                Log.d(TAG,"onProgressChanged progress = " + progress);
+
+                String i = "#"+Integer.toHexString(progress) + "000000";
+                RelativeLayout layout = mView.findViewById(R.id.STBlockerWindow);
+                layout.setBackgroundColor(Color.parseColor(i));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                Log.d(TAG,"onStartTrackingTouch");
+                mSTBHandler.removeMessages(STBHandler.MSG_SHOW_BRIGHT_BUTTON);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Log.d(TAG,"onStopTrackingTouch");
+                mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
+            }
+        });
+
+        mSTBHandler = new STBHandler(mBrightButton, mSeekBar);
 
 
         Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
@@ -122,7 +158,7 @@ public class ScreenTouchService extends Service {
                 params.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 
                 mView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        |View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
                 mWindowManager.addView(mView, params);
             } else {
@@ -132,6 +168,28 @@ public class ScreenTouchService extends Service {
             }
         }
         return Service.START_STICKY;
+    }
+
+    private static class STBHandler extends Handler {
+        public static final int MSG_SHOW_BRIGHT_BUTTON = 1;
+
+        private ImageView mBrightButton;
+        private SeekBar mSeekBar;
+
+        STBHandler(ImageView imageView, SeekBar seekBar) {
+            mBrightButton = imageView;
+            mSeekBar = seekBar;
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_SHOW_BRIGHT_BUTTON:
+                    mSeekBar.setVisibility(View.INVISIBLE);
+                    mBrightButton.setVisibility(View.VISIBLE);
+                    break;
+            }
+        }
     }
 }
 

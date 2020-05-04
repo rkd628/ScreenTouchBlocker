@@ -14,11 +14,26 @@
 
     <ImageView
         android:id="@+id/BrightBtn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:padding="10dp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="150dp"
         android:layout_centerHorizontal="true"
-        android:src="@mipmap/sct_bright_icon" />
+        android:src="@mipmap/sct_bright_icon"
+        android:background="@drawable/circle"
+        android:tint="#ffffff"/>
+
+    <SeekBar
+        android:id="@+id/BrightSeekBar"
+        android:layout_width="300dp"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="150dp"
+        android:max="200"
+        android:progress="100"
+        android:visibility="invisible"/>
+
 
 </RelativeLayout>
