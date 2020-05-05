@@ -18,7 +18,6 @@ public class MainActivity extends Activity {
     private String TAG = "seokil::MainActivity";
 
     NotificationManager notificationManager;
-    String CHANNEL_ID = "channel_id";
     Button btn;
 
     @Override
@@ -36,29 +35,29 @@ public class MainActivity extends Activity {
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannel();
 
-        btn = (Button)findViewById(R.id.btn);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG,"onClick()");
-
-                boolean turnsOn = !isScreenTouchServiceRunning();
-                Log.d(TAG,"onClick() turnsOn = " + turnsOn);
-
-                Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
-                notificationIntent.putExtra("fromButton", true);
-                notificationIntent.putExtra("turnsOn", turnsOn);
-
-                startForegroundService(notificationIntent);
-            }
-        });
+//        btn = (Button)findViewById(R.id.btn);
+//        btn.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Log.d(TAG,"onClick()");
+//
+//                boolean turnsOn = !isScreenTouchServiceRunning();
+//                Log.d(TAG,"onClick() turnsOn = " + turnsOn);
+//
+//                Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
+//                notificationIntent.putExtra("fromButton", true);
+//                notificationIntent.putExtra("turnsOn", turnsOn);
+//
+//                startForegroundService(notificationIntent);
+//            }
+//        });
     }
 
     private void createNotificationChannel() {
         CharSequence name = getString(R.string.channel_name);
         String description = getString(R.string.channel_description);
 
-        NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel notificationChannel = new NotificationChannel(Utils.CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT);
         notificationChannel.setDescription(description);
         notificationChannel.setShowBadge(false);
 

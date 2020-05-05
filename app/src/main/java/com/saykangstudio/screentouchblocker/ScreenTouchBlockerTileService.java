@@ -10,30 +10,18 @@ import android.util.Log;
 import java.lang.reflect.Method;
 
 public class ScreenTouchBlockerTileService extends TileService {
-
-    private String TAG = "seokil::ScreenTouchService";
-
-    boolean flag;
-
-    private String CHANNEL_ID = "channel_id";
-    private int NotificationID = 1;
-
+    public final String TAG = "seokil::ScreenTouchBlockerTileService";
 
     @Override
     public void onCreate() {
         Log.d(TAG,"onCreate()");
-        flag = false;
     }
 
     @Override
     public void onClick() {
         Log.d(TAG,"onClick()");
 
-        Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
-        notificationIntent.putExtra("fromQuickPanel", true);
-        boolean turnsOn = !isScreenTouchServiceRunning();
-        notificationIntent.putExtra("turnsOn", turnsOn);
-
+        Intent notificationIntent = new Intent(this, ScreenTouchService.class);
         startForegroundService(notificationIntent);
 
         // Reflection code.
@@ -51,19 +39,23 @@ public class ScreenTouchBlockerTileService extends TileService {
         updateTile();
     }
 
+    @Override
     public void onTileAdded() {
         Log.d(TAG,"onTileAdded");
     }
 
+    @Override
     public void onTileRemoved() {
         Log.d(TAG,"onTileRemoved");
     }
 
+    @Override
     public void onStartListening() {
         Log.d(TAG,"onStartListening");
         updateTile();
     }
 
+    @Override
     public void onStopListening() {
         Log.d(TAG,"onStopListening");
     }
