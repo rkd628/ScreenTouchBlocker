@@ -22,7 +22,7 @@
         android:layout_height="60dp"
         android:padding="10dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="150dp"
+        android:layout_marginBottom="60dp"
         android:layout_centerHorizontal="true"
         android:src="@mipmap/sct_bright_icon"
         android:background="@drawable/circle"
@@ -30,11 +30,11 @@
 
     <SeekBar
         android:id="@+id/BrightSeekBar"
-        android:layout_width="300dp"
+        android:layout_width="600dp"
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="150dp"
+        android:layout_marginBottom="60dp"
         android:max="255"
         android:progress="128"
         android:visibility="invisible" />

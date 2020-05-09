@@ -10,7 +10,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -69,7 +71,7 @@ public class ScreenTouchService extends Service {
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                Log.d(TAG,"onProgressChanged progress = " + progress);
+                Log.d(TAG, "onProgressChanged progress = " + progress);
 
                 String color;
                 if (progress >= 16) {
@@ -82,13 +84,13 @@ public class ScreenTouchService extends Service {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                Log.d(TAG,"onStartTrackingTouch");
+                Log.d(TAG, "onStartTrackingTouch");
                 mSTBHandler.removeMessages(STBHandler.MSG_SHOW_BRIGHT_BUTTON);
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                Log.d(TAG,"onStopTrackingTouch");
+                Log.d(TAG, "onStopTrackingTouch");
                 mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
             }
         });
@@ -101,11 +103,34 @@ public class ScreenTouchService extends Service {
             }
         });
 
+        mLockIcon.setOnTouchListener(new OnSwipeTouchListener(this,
+                new OnSwipeTouchListener.onSwipeListener() {
+            @Override
+            public void onSwipeRight() {
+                toggleService();
+            }
+
+            @Override
+            public void onSwipeLeft() {
+                toggleService();
+            }
+
+            @Override
+            public void onSwipeTop() {
+                toggleService();
+            }
+
+            @Override
+            public void onSwipeBottom() {
+                toggleService();
+            }
+        }));
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext(), Utils.CHANNEL_ID)
                 .setContentTitle(getString(R.string.notification_title))
                 .setContentText(getString(R.string.notification_content))
                 .setSmallIcon(R.mipmap.sct_launcher);
+
         startForeground(NotificationID, builder.build());
     }
 
@@ -147,6 +172,13 @@ public class ScreenTouchService extends Service {
         mBrightButton.setVisibility(View.VISIBLE);
     }
 
+
+    private void toggleService() {
+        // toggle means hide STB
+        Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
+        startService(notificationIntent);
+    }
+
     private static class STBHandler extends Handler {
         public static final int MSG_SHOW_BRIGHT_BUTTON = 1;
 
@@ -165,5 +197,68 @@ public class ScreenTouchService extends Service {
             }
         }
     }
-}
 
+    public static class OnSwipeTouchListener implements View.OnTouchListener {
+
+        private final GestureDetector gestureDetector;
+        private onSwipeListener mOnSwipeListener;
+
+        public OnSwipeTouchListener(Context ctx, onSwipeListener l) {
+            gestureDetector = new GestureDetector(ctx, new GestureListener());
+            mOnSwipeListener = l;
+        }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            return gestureDetector.onTouchEvent(event);
+        }
+
+        private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                boolean result = false;
+                try {
+                    float diffY = e2.getY() - e1.getY();
+                    float diffX = e2.getX() - e1.getX();
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                            if (diffX > 0) {
+                                mOnSwipeListener.onSwipeRight();
+                            } else {
+                                mOnSwipeListener.onSwipeLeft();
+
+                            }
+                        }
+                        result = true;
+                    } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY > 0) {
+                            mOnSwipeListener.onSwipeBottom();
+                        } else {
+                            mOnSwipeListener.onSwipeTop();
+                        }
+                        result = true;
+                    }
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+                return result;
+            }
+        }
+
+        public interface onSwipeListener {
+            void onSwipeRight();
+            void onSwipeLeft();
+            void onSwipeTop();
+            void onSwipeBottom();
+        }
+    }
+}
