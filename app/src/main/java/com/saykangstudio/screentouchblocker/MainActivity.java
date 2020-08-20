@@ -9,16 +9,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 
 public class MainActivity extends Activity {
 
     private String TAG = "seokil::MainActivity";
 
     NotificationManager notificationManager;
-    Button btn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,30 +30,13 @@ public class MainActivity extends Activity {
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannel();
-
-//        btn = (Button)findViewById(R.id.btn);
-//        btn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Log.d(TAG,"onClick()");
-//
-//                boolean turnsOn = !isScreenTouchServiceRunning();
-//                Log.d(TAG,"onClick() turnsOn = " + turnsOn);
-//
-//                Intent notificationIntent = new Intent(getApplicationContext(), ScreenTouchService.class);
-//                notificationIntent.putExtra("fromButton", true);
-//                notificationIntent.putExtra("turnsOn", turnsOn);
-//
-//                startForegroundService(notificationIntent);
-//            }
-//        });
     }
 
     private void createNotificationChannel() {
         CharSequence name = getString(R.string.channel_name);
         String description = getString(R.string.channel_description);
 
-        NotificationChannel notificationChannel = new NotificationChannel(Utils.CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel notificationChannel = new NotificationChannel(Utils.CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW);
         notificationChannel.setDescription(description);
         notificationChannel.setShowBadge(false);
 
