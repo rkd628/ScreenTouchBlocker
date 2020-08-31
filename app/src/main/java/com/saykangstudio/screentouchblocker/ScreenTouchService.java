@@ -33,6 +33,7 @@ public class ScreenTouchService extends Service {
     View mView;
     ImageView mBrightButton;
     SeekBar mSeekBar;
+    ImageView mLockIconBackground;
     ImageView mLockIcon;
     RelativeLayout mSTBlockerWindow;
 
@@ -95,35 +96,39 @@ public class ScreenTouchService extends Service {
             }
         });
 
+        mLockIconBackground = mView.findViewById(R.id.LockIconBackground);
         mLockIcon = mView.findViewById(R.id.LockIcon);
-        mLockIcon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "@@", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         mLockIcon.setOnTouchListener(new OnSwipeTouchListener(this,
-                new OnSwipeTouchListener.onSwipeListener() {
-            @Override
-            public void onSwipeRight() {
-                toggleService();
-            }
+                new OnSwipeTouchListener.OnSwipeListener() {
+                    @Override
+                    public void onDoubleTap() {
+                        mLockIconBackground.setVisibility(View.VISIBLE);
+                        mLockIcon.setColorFilter(Color.parseColor("#00ffaa"));
 
-            @Override
-            public void onSwipeLeft() {
-                toggleService();
-            }
+                        mSTBHandler.removeMessages(STBHandler.MSG_SHOW_LOCK_ICON_BACKGROUND);
+                        mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_LOCK_ICON_BACKGROUND, 2000);
+                    }
 
-            @Override
-            public void onSwipeTop() {
-                toggleService();
-            }
+                    @Override
+                    public void onSwipeRight() {
+                        toggleService();
+                    }
 
-            @Override
-            public void onSwipeBottom() {
-                toggleService();
-            }
+                    @Override
+                    public void onSwipeLeft() {
+                        toggleService();
+                    }
+
+                    @Override
+                    public void onSwipeTop() {
+                        toggleService();
+                    }
+
+                    @Override
+                    public void onSwipeBottom() {
+                        toggleService();
+                    }
         }));
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext(), Utils.CHANNEL_ID)
@@ -172,6 +177,11 @@ public class ScreenTouchService extends Service {
         mBrightButton.setVisibility(View.VISIBLE);
     }
 
+    private void hideLockIconBackground() {
+        mLockIconBackground.setVisibility(View.INVISIBLE);
+        mLockIcon.setColorFilter(Color.parseColor("#ff00aa"));
+    }
+
 
     private void toggleService() {
         // toggle means hide STB
@@ -181,6 +191,7 @@ public class ScreenTouchService extends Service {
 
     private static class STBHandler extends Handler {
         public static final int MSG_SHOW_BRIGHT_BUTTON = 1;
+        public static final int MSG_SHOW_LOCK_ICON_BACKGROUND = 2;
 
         private ScreenTouchService mScreenTouchService;
 
@@ -194,23 +205,28 @@ public class ScreenTouchService extends Service {
                 case MSG_SHOW_BRIGHT_BUTTON:
                     mScreenTouchService.hideSeekBar();
                     break;
+                case MSG_SHOW_LOCK_ICON_BACKGROUND:
+                    mScreenTouchService.hideLockIconBackground();
+                    break;
             }
         }
     }
 
     public static class OnSwipeTouchListener implements View.OnTouchListener {
 
-        private final GestureDetector gestureDetector;
-        private onSwipeListener mOnSwipeListener;
+        private final GestureDetector mGestureDetector;
+        private OnSwipeListener mOnSwipeListener;
+        private Context mContext;
 
-        public OnSwipeTouchListener(Context ctx, onSwipeListener l) {
-            gestureDetector = new GestureDetector(ctx, new GestureListener());
-            mOnSwipeListener = l;
+        public OnSwipeTouchListener(Context context, OnSwipeListener onSwipeListener) {
+            mContext = context;
+            mGestureDetector = new GestureDetector(context, new GestureListener());
+            mOnSwipeListener = onSwipeListener;
         }
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            return gestureDetector.onTouchEvent(event);
+            return mGestureDetector.onTouchEvent(event);
         }
 
         private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -220,6 +236,12 @@ public class ScreenTouchService extends Service {
 
             @Override
             public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                mOnSwipeListener.onDoubleTap();
                 return true;
             }
 
@@ -254,7 +276,8 @@ public class ScreenTouchService extends Service {
             }
         }
 
-        public interface onSwipeListener {
+        public interface OnSwipeListener {
+            void onDoubleTap();
             void onSwipeRight();
             void onSwipeLeft();
             void onSwipeTop();
