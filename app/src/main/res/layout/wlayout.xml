@@ -7,12 +7,30 @@
 
     <ImageView
         android:id="@+id/LockIconBackground"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:src="@drawable/circle"
         android:visibility="invisible"/>
+
+    <ImageView
+        android:id="@+id/LockIconOutLine"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:src="@mipmap/outline"
+        android:tint="#ffffff"
+        android:visibility="invisible"/>
+
+    <View
+        android:id="@+id/LockIconTouchOutLine"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:tint="#ffffff"/>
 
     <ImageView
         android:id="@+id/LockIcon"
@@ -21,7 +39,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:src="@mipmap/sct_lock_icon"
-        android:tint="#ff00aa"/>
+        android:tint="#c1c1c1"/>
 
     <ImageView
         android:id="@+id/BrightBtn"

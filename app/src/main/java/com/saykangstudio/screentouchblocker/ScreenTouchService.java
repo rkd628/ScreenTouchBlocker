@@ -15,10 +15,11 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -26,7 +27,7 @@ public class ScreenTouchService extends Service {
 
     private String TAG = "seokil::ScreenTouchService";
 
-    STBHandler mSTBHandler;
+    ScreenTouchBlockerHandler mScreenTouchBlockerHandler;
 
     WindowManager mWindowManager;
     LayoutInflater mInflater;
@@ -34,6 +35,8 @@ public class ScreenTouchService extends Service {
     ImageView mBrightButton;
     SeekBar mSeekBar;
     ImageView mLockIconBackground;
+    ImageView mLockIconOutLine;
+    View LockIconTouchOutLine;
     ImageView mLockIcon;
     RelativeLayout mSTBlockerWindow;
 
@@ -49,7 +52,7 @@ public class ScreenTouchService extends Service {
     public void onCreate() {
         Log.d(TAG, "ScreenTouchService onCreate()");
 
-        mSTBHandler = new STBHandler(this);
+        mScreenTouchBlockerHandler = new ScreenTouchBlockerHandler(this);
 
         mWindowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -64,7 +67,7 @@ public class ScreenTouchService extends Service {
                 mSeekBar.setVisibility(View.VISIBLE);
                 mBrightButton.setVisibility(View.INVISIBLE);
 
-                mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
+                mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
             }
         });
 
@@ -86,28 +89,37 @@ public class ScreenTouchService extends Service {
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
                 Log.d(TAG, "onStartTrackingTouch");
-                mSTBHandler.removeMessages(STBHandler.MSG_SHOW_BRIGHT_BUTTON);
+                mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_SHOW_BRIGHT_BUTTON);
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 Log.d(TAG, "onStopTrackingTouch");
-                mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
+                mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
             }
         });
 
         mLockIconBackground = mView.findViewById(R.id.LockIconBackground);
+        mLockIconBackground.setColorFilter(Color.parseColor("#ffffff"));
+        mLockIconBackground.setAlpha((float)0.8);
+
+        mLockIconOutLine = mView.findViewById(R.id.LockIconOutLine);
+        final Animation anim = AnimationUtils.loadAnimation(this, R.anim.scale_up);
+
         mLockIcon = mView.findViewById(R.id.LockIcon);
 
-        mLockIcon.setOnTouchListener(new OnSwipeTouchListener(this,
+        LockIconTouchOutLine = mView.findViewById(R.id.LockIconTouchOutLine);
+        LockIconTouchOutLine.setOnTouchListener(new OnSwipeTouchListener(this,
                 new OnSwipeTouchListener.OnSwipeListener() {
                     @Override
-                    public void onDoubleTap() {
+                    public void onShowPress() {
                         mLockIconBackground.setVisibility(View.VISIBLE);
+                        mLockIconBackground.startAnimation(anim);
+                        mLockIconOutLine.setVisibility(View.VISIBLE);
                         mLockIcon.setColorFilter(Color.parseColor("#00ffaa"));
 
-                        mSTBHandler.removeMessages(STBHandler.MSG_SHOW_LOCK_ICON_BACKGROUND);
-                        mSTBHandler.sendEmptyMessageDelayed(STBHandler.MSG_SHOW_LOCK_ICON_BACKGROUND, 2000);
+                        mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND);
+                        mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND, 2000);
                     }
 
                     @Override
@@ -179,9 +191,9 @@ public class ScreenTouchService extends Service {
 
     private void hideLockIconBackground() {
         mLockIconBackground.setVisibility(View.INVISIBLE);
-        mLockIcon.setColorFilter(Color.parseColor("#ff00aa"));
+        mLockIconOutLine.setVisibility(View.INVISIBLE);
+        mLockIcon.setColorFilter(Color.parseColor("#c1c1c1"));
     }
-
 
     private void toggleService() {
         // toggle means hide STB
@@ -189,13 +201,13 @@ public class ScreenTouchService extends Service {
         startService(notificationIntent);
     }
 
-    private static class STBHandler extends Handler {
+    private static class ScreenTouchBlockerHandler extends Handler {
         public static final int MSG_SHOW_BRIGHT_BUTTON = 1;
         public static final int MSG_SHOW_LOCK_ICON_BACKGROUND = 2;
 
         private ScreenTouchService mScreenTouchService;
 
-        STBHandler(ScreenTouchService screenTouchService) {
+        ScreenTouchBlockerHandler(ScreenTouchService screenTouchService) {
             mScreenTouchService = screenTouchService;
         }
 
@@ -216,10 +228,8 @@ public class ScreenTouchService extends Service {
 
         private final GestureDetector mGestureDetector;
         private OnSwipeListener mOnSwipeListener;
-        private Context mContext;
 
         public OnSwipeTouchListener(Context context, OnSwipeListener onSwipeListener) {
-            mContext = context;
             mGestureDetector = new GestureDetector(context, new GestureListener());
             mOnSwipeListener = onSwipeListener;
         }
@@ -240,9 +250,20 @@ public class ScreenTouchService extends Service {
             }
 
             @Override
-            public boolean onDoubleTap(MotionEvent e) {
-                mOnSwipeListener.onDoubleTap();
-                return true;
+            public void onShowPress(MotionEvent e) {
+                mOnSwipeListener.onShowPress();
+            }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                Log.d("seokil","seokil onSingleTapConfirmed");
+                return super.onSingleTapConfirmed(e);
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                Log.d("seokil","seokil onLongPress");
+                super.onLongPress(e);
             }
 
             @Override
@@ -277,7 +298,7 @@ public class ScreenTouchService extends Service {
         }
 
         public interface OnSwipeListener {
-            void onDoubleTap();
+            void onShowPress();
             void onSwipeRight();
             void onSwipeLeft();
             void onSwipeTop();
