@@ -104,7 +104,7 @@ public class ScreenTouchService extends Service {
         mLockIconBackground.setAlpha((float)0.8);
 
         mLockIconOutLine = mView.findViewById(R.id.LockIconOutLine);
-        final Animation anim = AnimationUtils.loadAnimation(this, R.anim.scale_up);
+        final Animation animUp = AnimationUtils.loadAnimation(this, R.anim.scale_up);
 
         mLockIcon = mView.findViewById(R.id.LockIcon);
 
@@ -112,14 +112,27 @@ public class ScreenTouchService extends Service {
         LockIconTouchOutLine.setOnTouchListener(new OnSwipeTouchListener(this,
                 new OnSwipeTouchListener.OnSwipeListener() {
                     @Override
+                    public void onTouch(MotionEvent event) {
+                        Log.d("seokil","seokil onTouch = " + event.getAction());
+                        final int action = event.getAction();
+                        switch (action) {
+                            case MotionEvent.ACTION_DOWN:
+                                break;
+                            case MotionEvent.ACTION_UP:
+                                hideLockIconBackground();
+                                break;
+                        }
+                    }
+
+                    @Override
                     public void onShowPress() {
                         mLockIconBackground.setVisibility(View.VISIBLE);
-                        mLockIconBackground.startAnimation(anim);
+                        mLockIconBackground.startAnimation(animUp);
                         mLockIconOutLine.setVisibility(View.VISIBLE);
                         mLockIcon.setColorFilter(Color.parseColor("#00ffaa"));
 
-                        mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND);
-                        mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND, 2000);
+//                        mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND);
+//                        mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND, 2000);
                     }
 
                     @Override
@@ -190,7 +203,12 @@ public class ScreenTouchService extends Service {
     }
 
     private void hideLockIconBackground() {
+        final Animation animDown = AnimationUtils.loadAnimation(this, R.anim.scale_down);
+
+        mLockIconBackground.startAnimation(animDown);
         mLockIconBackground.setVisibility(View.INVISIBLE);
+
+        mLockIconOutLine.startAnimation(animDown);
         mLockIconOutLine.setVisibility(View.INVISIBLE);
         mLockIcon.setColorFilter(Color.parseColor("#c1c1c1"));
     }
@@ -236,6 +254,7 @@ public class ScreenTouchService extends Service {
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
+            mOnSwipeListener.onTouch(event);
             return mGestureDetector.onTouchEvent(event);
         }
 
@@ -251,7 +270,14 @@ public class ScreenTouchService extends Service {
 
             @Override
             public void onShowPress(MotionEvent e) {
+                Log.d("seokil","seokil onShowPress = " + e.getAction());
                 mOnSwipeListener.onShowPress();
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                Log.d("seokil","seokil onSingleTapUp");
+                return super.onSingleTapUp(e);
             }
 
             @Override
@@ -298,6 +324,7 @@ public class ScreenTouchService extends Service {
         }
 
         public interface OnSwipeListener {
+            void onTouch(MotionEvent event);
             void onShowPress();
             void onSwipeRight();
             void onSwipeLeft();
