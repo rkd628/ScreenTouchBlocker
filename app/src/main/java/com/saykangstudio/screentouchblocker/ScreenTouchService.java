@@ -1,15 +1,18 @@
 package com.saykangstudio.screentouchblocker;
 
+import android.animation.ValueAnimator;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -17,6 +20,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -35,10 +39,14 @@ public class ScreenTouchService extends Service {
     ImageView mBrightButton;
     SeekBar mSeekBar;
     ImageView mLockIconBackground;
-    ImageView mLockIconOutLine;
+    ImageView mLockIconGuideLine;
     View LockIconTouchOutLine;
     ImageView mLockIcon;
     RelativeLayout mSTBlockerWindow;
+    Rect rect;
+    boolean mIsOuting;
+    Interpolator mLockIconInterpolator;
+    ValueAnimator mLockIconTransitionAnimator;
 
     int NotificationID = 1;
 
@@ -100,61 +108,59 @@ public class ScreenTouchService extends Service {
         });
 
         mLockIconBackground = mView.findViewById(R.id.LockIconBackground);
-        mLockIconBackground.setColorFilter(Color.parseColor("#ffffff"));
-        mLockIconBackground.setAlpha((float)0.8);
-
-        mLockIconOutLine = mView.findViewById(R.id.LockIconOutLine);
-        final Animation animUp = AnimationUtils.loadAnimation(this, R.anim.scale_up);
-
+        mLockIconGuideLine = mView.findViewById(R.id.LockIconGuideLine);
         mLockIcon = mView.findViewById(R.id.LockIcon);
 
+        initInterpolators();
+
+        mLockIconBackground.setScaleX(0f);
+
+        rect = new Rect();
+        mIsOuting = false;
+
         LockIconTouchOutLine = mView.findViewById(R.id.LockIconTouchOutLine);
-        LockIconTouchOutLine.setOnTouchListener(new OnSwipeTouchListener(this,
-                new OnSwipeTouchListener.OnSwipeListener() {
-                    @Override
-                    public void onTouch(MotionEvent event) {
-                        Log.d("seokil","seokil onTouch = " + event.getAction());
-                        final int action = event.getAction();
-                        switch (action) {
-                            case MotionEvent.ACTION_DOWN:
-                                break;
-                            case MotionEvent.ACTION_UP:
-                                hideLockIconBackground();
-                                break;
+        LockIconTouchOutLine.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                final int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_HIDE_LOCK_GUIDELINE);
+                        mLockIconGuideLine.setVisibility(View.VISIBLE);
+
+                        LockIconTouchOutLine.getHitRect(rect);
+
+                        if (mLockIconTransitionAnimator.getAnimatedFraction() > 0) {
+                            mLockIconTransitionAnimator.reverse();
+                        } else {
+                            mLockIconTransitionAnimator.start();
                         }
-                    }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if (mLockIconTransitionAnimator.getAnimatedFraction() > 0) {
+                            mLockIconTransitionAnimator.reverse();
+                        } else {
+                            mLockIconTransitionAnimator.start();
+                        }
+                        mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_HIDE_LOCK_GUIDELINE, 3000);
 
-                    @Override
-                    public void onShowPress() {
-                        mLockIconBackground.setVisibility(View.VISIBLE);
-                        mLockIconBackground.startAnimation(animUp);
-                        mLockIconOutLine.setVisibility(View.VISIBLE);
-                        mLockIcon.setColorFilter(Color.parseColor("#00ffaa"));
-
-//                        mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND);
-//                        mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_LOCK_ICON_BACKGROUND, 2000);
-                    }
-
-                    @Override
-                    public void onSwipeRight() {
-                        toggleService();
-                    }
-
-                    @Override
-                    public void onSwipeLeft() {
-                        toggleService();
-                    }
-
-                    @Override
-                    public void onSwipeTop() {
-                        toggleService();
-                    }
-
-                    @Override
-                    public void onSwipeBottom() {
-                        toggleService();
-                    }
-        }));
+                        if (!rect.contains(v.getLeft() + (int)event.getX(), v.getTop() +  (int)event.getY())) {
+                            toggleService();
+                        }
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (!rect.contains(v.getLeft() + (int)event.getX(), v.getTop() +  (int)event.getY()) && !mIsOuting) {
+                            mIsOuting = true;
+                            mSTBlockerWindow.setBackgroundColor(Color.parseColor("#55000000"));
+                        } else if (rect.contains(v.getLeft() + (int)event.getX(), v.getTop() +  (int)event.getY()) && mIsOuting) {
+                            mIsOuting = false;
+                            mSTBlockerWindow.setBackgroundColor(Color.parseColor("#99000000"));
+                        }
+                        break;
+                }
+                return true;
+            }
+        });
 
         Notification.Builder builder = new Notification.Builder(getApplicationContext(), Utils.CHANNEL_ID)
                 .setContentTitle(getString(R.string.notification_title))
@@ -202,15 +208,8 @@ public class ScreenTouchService extends Service {
         mBrightButton.setVisibility(View.VISIBLE);
     }
 
-    private void hideLockIconBackground() {
-        final Animation animDown = AnimationUtils.loadAnimation(this, R.anim.scale_down);
-
-        mLockIconBackground.startAnimation(animDown);
-        mLockIconBackground.setVisibility(View.INVISIBLE);
-
-        mLockIconOutLine.startAnimation(animDown);
-        mLockIconOutLine.setVisibility(View.INVISIBLE);
-        mLockIcon.setColorFilter(Color.parseColor("#c1c1c1"));
+    private void hideLockGuideline() {
+        mLockIconGuideLine.setVisibility(View.INVISIBLE);
     }
 
     private void toggleService() {
@@ -219,9 +218,25 @@ public class ScreenTouchService extends Service {
         startService(notificationIntent);
     }
 
+    private void initInterpolators() {
+        mLockIconInterpolator = AnimationUtils.loadInterpolator(this,
+                android.R.interpolator.fast_out_slow_in);
+        mLockIconTransitionAnimator = ValueAnimator.ofFloat(0f, 1f);
+        mLockIconTransitionAnimator.setDuration(300);
+        mLockIconTransitionAnimator.setInterpolator(mLockIconInterpolator);
+        mLockIconTransitionAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float animatedValue = (float)animation.getAnimatedValue();
+                mLockIconBackground.setScaleX(animatedValue);
+                mLockIconBackground.setScaleY(animatedValue);
+            }
+        });
+    }
+
     private static class ScreenTouchBlockerHandler extends Handler {
         public static final int MSG_SHOW_BRIGHT_BUTTON = 1;
-        public static final int MSG_SHOW_LOCK_ICON_BACKGROUND = 2;
+        public static final int MSG_HIDE_LOCK_GUIDELINE = 2;
 
         private ScreenTouchService mScreenTouchService;
 
@@ -235,101 +250,10 @@ public class ScreenTouchService extends Service {
                 case MSG_SHOW_BRIGHT_BUTTON:
                     mScreenTouchService.hideSeekBar();
                     break;
-                case MSG_SHOW_LOCK_ICON_BACKGROUND:
-                    mScreenTouchService.hideLockIconBackground();
+                case MSG_HIDE_LOCK_GUIDELINE:
+                    mScreenTouchService.hideLockGuideline();
                     break;
             }
-        }
-    }
-
-    public static class OnSwipeTouchListener implements View.OnTouchListener {
-
-        private final GestureDetector mGestureDetector;
-        private OnSwipeListener mOnSwipeListener;
-
-        public OnSwipeTouchListener(Context context, OnSwipeListener onSwipeListener) {
-            mGestureDetector = new GestureDetector(context, new GestureListener());
-            mOnSwipeListener = onSwipeListener;
-        }
-
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            mOnSwipeListener.onTouch(event);
-            return mGestureDetector.onTouchEvent(event);
-        }
-
-        private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
-
-            private static final int SWIPE_THRESHOLD = 100;
-            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-            @Override
-            public boolean onDown(MotionEvent e) {
-                return true;
-            }
-
-            @Override
-            public void onShowPress(MotionEvent e) {
-                Log.d("seokil","seokil onShowPress = " + e.getAction());
-                mOnSwipeListener.onShowPress();
-            }
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                Log.d("seokil","seokil onSingleTapUp");
-                return super.onSingleTapUp(e);
-            }
-
-            @Override
-            public boolean onSingleTapConfirmed(MotionEvent e) {
-                Log.d("seokil","seokil onSingleTapConfirmed");
-                return super.onSingleTapConfirmed(e);
-            }
-
-            @Override
-            public void onLongPress(MotionEvent e) {
-                Log.d("seokil","seokil onLongPress");
-                super.onLongPress(e);
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                boolean result = false;
-                try {
-                    float diffY = e2.getY() - e1.getY();
-                    float diffX = e2.getX() - e1.getX();
-                    if (Math.abs(diffX) > Math.abs(diffY)) {
-                        if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                            if (diffX > 0) {
-                                mOnSwipeListener.onSwipeRight();
-                            } else {
-                                mOnSwipeListener.onSwipeLeft();
-
-                            }
-                        }
-                        result = true;
-                    } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffY > 0) {
-                            mOnSwipeListener.onSwipeBottom();
-                        } else {
-                            mOnSwipeListener.onSwipeTop();
-                        }
-                        result = true;
-                    }
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
-                return result;
-            }
-        }
-
-        public interface OnSwipeListener {
-            void onTouch(MotionEvent event);
-            void onShowPress();
-            void onSwipeRight();
-            void onSwipeLeft();
-            void onSwipeTop();
-            void onSwipeBottom();
         }
     }
 }
