@@ -1,5 +1,6 @@
 package com.saykangstudio.screentouchblocker;
 
+import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.app.Notification;
 import android.app.Service;
@@ -12,13 +13,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
-import android.view.DragEvent;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.widget.ImageView;
@@ -45,8 +43,11 @@ public class ScreenTouchService extends Service {
     RelativeLayout mSTBlockerWindow;
     Rect rect;
     boolean mIsOuting;
-    Interpolator mLockIconInterpolator;
-    ValueAnimator mLockIconTransitionAnimator;
+    Interpolator mLockIconBackgroundInterpolator;
+    Interpolator mBackgroundInterpolator;
+    ValueAnimator mLockIconBackgroundTransitionAnimator;
+    ValueAnimator mBackgroundColorAnimator;
+    int alphaValue;
 
     int NotificationID = 1;
 
@@ -85,11 +86,13 @@ public class ScreenTouchService extends Service {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 Log.d(TAG, "onProgressChanged progress = " + progress);
 
+                alphaValue = progress;
+
                 String color;
-                if (progress >= 16) {
-                    color = "#" + Integer.toHexString(progress) + "000000";
+                if (alphaValue >= 16) {
+                    color = "#" + Integer.toHexString(alphaValue) + "000000";
                 } else {
-                    color = "#0" + Integer.toHexString(progress) + "000000";
+                    color = "#0" + Integer.toHexString(alphaValue) + "000000";
                 }
                 mSTBlockerWindow.setBackgroundColor(Color.parseColor(color));
             }
@@ -106,17 +109,17 @@ public class ScreenTouchService extends Service {
                 mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
             }
         });
+        alphaValue = mSeekBar.getProgress();
 
         mLockIconBackground = mView.findViewById(R.id.LockIconBackground);
         mLockIconGuideLine = mView.findViewById(R.id.LockIconGuideLine);
         mLockIcon = mView.findViewById(R.id.LockIcon);
 
-        initInterpolators();
+        initLockIconBackgroundAnimator();
 
         mLockIconBackground.setScaleX(0f);
 
         rect = new Rect();
-        mIsOuting = false;
 
         LockIconTouchOutLine = mView.findViewById(R.id.LockIconTouchOutLine);
         LockIconTouchOutLine.setOnTouchListener(new View.OnTouchListener() {
@@ -127,20 +130,21 @@ public class ScreenTouchService extends Service {
                     case MotionEvent.ACTION_DOWN:
                         mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_HIDE_LOCK_GUIDELINE);
                         mLockIconGuideLine.setVisibility(View.VISIBLE);
-
                         LockIconTouchOutLine.getHitRect(rect);
 
-                        if (mLockIconTransitionAnimator.getAnimatedFraction() > 0) {
-                            mLockIconTransitionAnimator.reverse();
+                        initBackgroundColorAnimator(alphaValue);
+
+                        if (mLockIconBackgroundTransitionAnimator.getAnimatedFraction() > 0) {
+                            mLockIconBackgroundTransitionAnimator.reverse();
                         } else {
-                            mLockIconTransitionAnimator.start();
+                            mLockIconBackgroundTransitionAnimator.start();
                         }
                         break;
                     case MotionEvent.ACTION_UP:
-                        if (mLockIconTransitionAnimator.getAnimatedFraction() > 0) {
-                            mLockIconTransitionAnimator.reverse();
+                        if (mLockIconBackgroundTransitionAnimator.getAnimatedFraction() > 0) {
+                            mLockIconBackgroundTransitionAnimator.reverse();
                         } else {
-                            mLockIconTransitionAnimator.start();
+                            mLockIconBackgroundTransitionAnimator.start();
                         }
                         mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_HIDE_LOCK_GUIDELINE, 3000);
 
@@ -151,10 +155,14 @@ public class ScreenTouchService extends Service {
                     case MotionEvent.ACTION_MOVE:
                         if (!rect.contains(v.getLeft() + (int)event.getX(), v.getTop() +  (int)event.getY()) && !mIsOuting) {
                             mIsOuting = true;
-                            mSTBlockerWindow.setBackgroundColor(Color.parseColor("#55000000"));
+                            mBackgroundColorAnimator.start();
+                            mLockIconBackground.setAlpha(0.4f);
+                            mLockIconGuideLine.setAlpha(0.4f);
                         } else if (rect.contains(v.getLeft() + (int)event.getX(), v.getTop() +  (int)event.getY()) && mIsOuting) {
                             mIsOuting = false;
-                            mSTBlockerWindow.setBackgroundColor(Color.parseColor("#99000000"));
+                            mBackgroundColorAnimator.reverse();
+                            mLockIconBackground.setAlpha(0.6f);
+                            mLockIconGuideLine.setAlpha(1f);
                         }
                         break;
                 }
@@ -218,18 +226,50 @@ public class ScreenTouchService extends Service {
         startService(notificationIntent);
     }
 
-    private void initInterpolators() {
-        mLockIconInterpolator = AnimationUtils.loadInterpolator(this,
+    private void initLockIconBackgroundAnimator() {
+        mLockIconBackgroundInterpolator = AnimationUtils.loadInterpolator(this,
                 android.R.interpolator.fast_out_slow_in);
-        mLockIconTransitionAnimator = ValueAnimator.ofFloat(0f, 1f);
-        mLockIconTransitionAnimator.setDuration(300);
-        mLockIconTransitionAnimator.setInterpolator(mLockIconInterpolator);
-        mLockIconTransitionAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        mLockIconBackgroundTransitionAnimator = ValueAnimator.ofFloat(0f, 1f);
+        mLockIconBackgroundTransitionAnimator.setDuration(300);
+        mLockIconBackgroundTransitionAnimator.setInterpolator(mLockIconBackgroundInterpolator);
+        mLockIconBackgroundTransitionAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float animatedValue = (float)animation.getAnimatedValue();
                 mLockIconBackground.setScaleX(animatedValue);
                 mLockIconBackground.setScaleY(animatedValue);
+            }
+        });
+    }
+
+    private void initBackgroundColorAnimator(int currentAlpha) {
+        mBackgroundInterpolator = AnimationUtils.loadInterpolator(this,
+                android.R.interpolator.linear);
+
+        String currentColor;
+        if (currentAlpha >= 16) {
+            currentColor = "#" + Integer.toHexString(currentAlpha) + "000000";
+        } else {
+            currentColor = "#0" + Integer.toHexString(currentAlpha) + "000000";
+        }
+
+        int afterAlpha = currentAlpha - 128;
+        String afterColor;
+        if (afterAlpha <= 0) {
+            afterColor = "#" + "00" + "000000";
+        } else if (afterAlpha < 16){
+            afterColor = "#0" + Integer.toHexString(afterAlpha) + "000000";
+        } else {
+            afterColor = "#" + Integer.toHexString(afterAlpha) + "000000";
+        }
+
+        mBackgroundColorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), Color.parseColor(currentColor), Color.parseColor(afterColor));
+        mBackgroundColorAnimator.setDuration(500);
+        mBackgroundColorAnimator.setInterpolator(mBackgroundInterpolator);
+        mBackgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animator) {
+                mSTBlockerWindow.setBackgroundColor((int) animator.getAnimatedValue());
             }
         });
     }
