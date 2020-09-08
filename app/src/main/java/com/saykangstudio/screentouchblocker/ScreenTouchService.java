@@ -40,7 +40,7 @@ public class ScreenTouchService extends Service {
     ImageView mLockIconGuideLine;
     View LockIconTouchOutLine;
     ImageView mLockIcon;
-    RelativeLayout mSTBlockerWindow;
+    RelativeLayout mScreenTouchBlockerWindow;
     Rect rect;
     boolean mIsOuting;
     Interpolator mLockIconBackgroundInterpolator;
@@ -48,6 +48,8 @@ public class ScreenTouchService extends Service {
     ValueAnimator mLockIconBackgroundTransitionAnimator;
     ValueAnimator mBackgroundColorAnimator;
     int alphaValue;
+    View mEntireView;
+    boolean seekBarMode;
 
     int NotificationID = 1;
 
@@ -67,32 +69,35 @@ public class ScreenTouchService extends Service {
         mInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mView = mInflater.inflate(R.layout.wlayout, null);
 
-        mSTBlockerWindow = mView.findViewById(R.id.STBlockerWindow);
+        mScreenTouchBlockerWindow = mView.findViewById(R.id.ScreenTouchBlockerWindow);
 
-        View tempv = mView.findViewById(R.id.EntireView);
-
-        tempv.setOnTouchListener(new View.OnTouchListener() {
+        mEntireView = mView.findViewById(R.id.EntireView);
+        mEntireView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_HIDE_ALL);
+                if (!seekBarMode) {
+                    mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_HIDE_ALL);
 
-                mBrightButton.setVisibility(View.VISIBLE);
-                mLockIcon.setVisibility(View.VISIBLE);
+                    mLockIcon.setVisibility(View.VISIBLE);
+                    mBrightButton.setVisibility(View.VISIBLE);
 
-                mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_HIDE_ALL, 5000);
-
+                    mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_HIDE_ALL, 5000);
+                }
                 return false;
             }
         });
-
 
         mBrightButton = mView.findViewById(R.id.BrightBtn);
         mBrightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mSeekBar.setVisibility(View.VISIBLE);
+                mLockIcon.setVisibility(View.INVISIBLE);
+                mLockIconGuideLine.setVisibility(View.INVISIBLE);
                 mBrightButton.setVisibility(View.INVISIBLE);
 
+                seekBarMode = true;
+                mScreenTouchBlockerHandler.removeMessages(ScreenTouchBlockerHandler.MSG_HIDE_ALL);
                 mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_SHOW_BRIGHT_BUTTON, 2000);
             }
         });
@@ -111,7 +116,7 @@ public class ScreenTouchService extends Service {
                 } else {
                     color = "#0" + Integer.toHexString(alphaValue) + "000000";
                 }
-                mSTBlockerWindow.setBackgroundColor(Color.parseColor(color));
+                mScreenTouchBlockerWindow.setBackgroundColor(Color.parseColor(color));
             }
 
             @Override
@@ -142,6 +147,9 @@ public class ScreenTouchService extends Service {
         LockIconTouchOutLine.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if (seekBarMode) {
+                    return false;
+                }
                 final int action = event.getAction();
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
@@ -251,7 +259,10 @@ public class ScreenTouchService extends Service {
 
     private void hideSeekBar() {
         mSeekBar.setVisibility(View.INVISIBLE);
+        mLockIcon.setVisibility(View.VISIBLE);
         mBrightButton.setVisibility(View.VISIBLE);
+        seekBarMode = false;
+        mScreenTouchBlockerHandler.sendEmptyMessageDelayed(ScreenTouchBlockerHandler.MSG_HIDE_ALL, 5000);
     }
 
     private void hideLockGuideline() {
@@ -307,7 +318,7 @@ public class ScreenTouchService extends Service {
         mBackgroundColorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animator) {
-                mSTBlockerWindow.setBackgroundColor((int) animator.getAnimatedValue());
+                mScreenTouchBlockerWindow.setBackgroundColor((int) animator.getAnimatedValue());
             }
         });
     }
