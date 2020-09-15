@@ -9,6 +9,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 public class MainActivity extends Activity {
 
@@ -16,20 +19,50 @@ public class MainActivity extends Activity {
 
     NotificationManager notificationManager;
 
+    final int MANAGE_OVERLAY_PERMISSION = 1;
+    Button btn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(!Settings.canDrawOverlays(this)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-            finish();
-            return;
-        }
-
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannel();
+
+        btn = findViewById(R.id.btn);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!Settings.canDrawOverlays(getApplicationContext())) {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (Settings.canDrawOverlays(this)) {
+            btn.setEnabled(false);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult requestCode = " + requestCode + " resultCode = " + resultCode);
+
+        switch(requestCode) {
+            case MANAGE_OVERLAY_PERMISSION:
+//                if (Settings.canDrawOverlays(this)) {
+//                    btn.setEnabled(false);
+//                }
+                break;
+        }
     }
 
     private void createNotificationChannel() {
