@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#55000000">
+
+    <ImageView
+        android:id="@+id/WelcomeLogo"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:src="@mipmap/sct_hello_world_logo"/>
+
+    <ImageView
+        android:id="@+id/ScreenTouchBlockerLogo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:padding="15dp"
+        android:layout_below="@+id/WelcomeLogo"
+        android:layout_centerHorizontal="true"
+        android:tint="#88ffaa"
+        android:src="@mipmap/sct_lock_icon"/>
+
+    <TextView
+        android:id="@+id/ContentText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/ScreenTouchBlockerLogo"
+        android:textSize="35sp"
+        android:textAlignment="center"
+        android:text="Welcome to use\nscreen-touch-blocker" />
+
+    <TextView
+        android:id="@+id/DetailText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_below="@+id/ContentText"
+        android:textSize="20sp"
+        android:text="In order to use screen-touoch-blocker, it needs the \'Show on top of other apps\' permission. Please allow permission for use." />
+
+    <Button
+        android:id="@+id/AllowButton"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="45dp"
+        android:layout_below="@+id/DetailText"
+        android:layout_centerHorizontal="true"
+        android:text="Allow" />
+
+
+</RelativeLayout>

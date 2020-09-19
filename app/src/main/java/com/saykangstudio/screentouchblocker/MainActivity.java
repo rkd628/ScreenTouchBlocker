@@ -30,24 +30,17 @@ public class MainActivity extends Activity {
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannel();
 
-        btn = findViewById(R.id.btn);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!Settings.canDrawOverlays(getApplicationContext())) {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
-                    startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
-                }
-            }
-        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (Settings.canDrawOverlays(this)) {
-            btn.setEnabled(false);
+        if (!Settings.canDrawOverlays(this)) {
+            Log.d(TAG, "ACTION_MANAGE_OVERLAY_PERMISSION needed.");
+            Intent intent = new Intent();
+            intent.setClass(this, PermissionGrantActivity.class);
+            startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
         }
     }
 
@@ -58,9 +51,9 @@ public class MainActivity extends Activity {
 
         switch(requestCode) {
             case MANAGE_OVERLAY_PERMISSION:
-//                if (Settings.canDrawOverlays(this)) {
-//                    btn.setEnabled(false);
-//                }
+                if (!Settings.canDrawOverlays(this)) {
+                    finish();
+                }
                 break;
         }
     }
