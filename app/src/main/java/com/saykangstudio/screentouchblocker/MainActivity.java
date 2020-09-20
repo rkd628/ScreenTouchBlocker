@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.Settings;
 import android.os.Bundle;
@@ -20,7 +21,6 @@ public class MainActivity extends Activity {
     NotificationManager notificationManager;
 
     final int MANAGE_OVERLAY_PERMISSION = 1;
-    Button btn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +29,6 @@ public class MainActivity extends Activity {
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         createNotificationChannel();
-
     }
 
     @Override
@@ -42,6 +41,14 @@ public class MainActivity extends Activity {
             intent.setClass(this, PermissionGrantActivity.class);
             startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
         }
+
+        SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        if (!prefs.getBoolean("TileAdded", false)) {
+            Log.d(TAG, "TileAdded false.");
+            Intent intent = new Intent();
+            intent.setClass(this, QuickTileGuideActivity.class);
+            startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
+        }
     }
 
     @Override
@@ -51,7 +58,7 @@ public class MainActivity extends Activity {
 
         switch(requestCode) {
             case MANAGE_OVERLAY_PERMISSION:
-                if (!Settings.canDrawOverlays(this)) {
+                if (resultCode != Activity.RESULT_OK) {
                     finish();
                 }
                 break;

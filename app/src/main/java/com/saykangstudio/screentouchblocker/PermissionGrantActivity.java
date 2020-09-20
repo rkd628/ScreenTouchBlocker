@@ -2,9 +2,6 @@ package com.saykangstudio.screentouchblocker;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.NotificationManager;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -13,10 +10,6 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
 
 public class PermissionGrantActivity extends Activity {
 
@@ -51,6 +44,7 @@ public class PermissionGrantActivity extends Activity {
         switch(requestCode) {
             case MANAGE_OVERLAY_PERMISSION:
                 if (Settings.canDrawOverlays(this)) {
+                    setResult(Activity.RESULT_OK);
                     finish();
                 } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);

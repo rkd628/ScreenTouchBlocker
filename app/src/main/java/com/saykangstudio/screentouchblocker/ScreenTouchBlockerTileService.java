@@ -3,6 +3,8 @@ package com.saykangstudio.screentouchblocker;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.util.Log;
@@ -42,11 +44,15 @@ public class ScreenTouchBlockerTileService extends TileService {
     @Override
     public void onTileAdded() {
         Log.d(TAG,"onTileAdded");
+        SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        prefs.edit().putBoolean("TileAdded", true).apply();
     }
 
     @Override
     public void onTileRemoved() {
         Log.d(TAG,"onTileRemoved");
+        SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        prefs.edit().putBoolean("TileAdded", false).apply();
     }
 
     @Override
