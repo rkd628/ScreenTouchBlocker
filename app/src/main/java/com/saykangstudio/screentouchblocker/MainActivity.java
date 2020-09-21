@@ -21,6 +21,7 @@ public class MainActivity extends Activity {
     NotificationManager notificationManager;
 
     final int MANAGE_OVERLAY_PERMISSION = 1;
+    final int MANAGE_TILE_ADDED = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,14 +41,11 @@ public class MainActivity extends Activity {
             Intent intent = new Intent();
             intent.setClass(this, PermissionGrantActivity.class);
             startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
-        }
-
-        SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
-        if (!prefs.getBoolean("TileAdded", false)) {
+        } else if (!Utils.getSharedPreferences(this).getBoolean(Utils.KEY_TILE_ADDED, false)) {
             Log.d(TAG, "TileAdded false.");
             Intent intent = new Intent();
             intent.setClass(this, QuickTileGuideActivity.class);
-            startActivityForResult(intent, MANAGE_OVERLAY_PERMISSION);
+            startActivityForResult(intent, MANAGE_TILE_ADDED);
         }
     }
 
@@ -58,6 +56,11 @@ public class MainActivity extends Activity {
 
         switch(requestCode) {
             case MANAGE_OVERLAY_PERMISSION:
+                if (resultCode != Activity.RESULT_OK) {
+                    finish();
+                }
+                break;
+            case MANAGE_TILE_ADDED:
                 if (resultCode != Activity.RESULT_OK) {
                     finish();
                 }

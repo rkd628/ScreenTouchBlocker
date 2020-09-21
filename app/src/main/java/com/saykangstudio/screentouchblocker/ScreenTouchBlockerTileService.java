@@ -9,6 +9,8 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.util.Log;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.lang.reflect.Method;
 
 public class ScreenTouchBlockerTileService extends TileService {
@@ -43,16 +45,22 @@ public class ScreenTouchBlockerTileService extends TileService {
 
     @Override
     public void onTileAdded() {
-        Log.d(TAG,"onTileAdded");
-        SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
-        prefs.edit().putBoolean("TileAdded", true).apply();
+        boolean result = Utils.getSharedPreferences(this).edit().putBoolean(Utils.KEY_TILE_ADDED, true).commit();
+        Log.d(TAG,"onTileAdded result = " + result);
+        sendMessage("ADDED");
     }
 
     @Override
     public void onTileRemoved() {
-        Log.d(TAG,"onTileRemoved");
-        SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
-        prefs.edit().putBoolean("TileAdded", false).apply();
+        boolean result = Utils.getSharedPreferences(this).edit().putBoolean(Utils.KEY_TILE_ADDED, false).commit();
+        Log.d(TAG,"onTileRemoved result = " + result);
+        sendMessage("REMOVED");
+    }
+
+    private void sendMessage(String message) {
+        Intent intent = new Intent(Utils.ACTION_QUICK_TILE_SETTING);
+        intent.putExtra("message", message);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     @Override
