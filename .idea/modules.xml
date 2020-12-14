@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ScreenTouchBlocker.iml" filepath="$PROJECT_DIR$/ScreenTouchBlocker.iml" group="ScreenTouchBlocker" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="ScreenTouchBlocker/app" />
+      <module fileurl="file://$PROJECT_DIR$/ScreenTouchBlocker.iml" filepath="$PROJECT_DIR$/ScreenTouchBlocker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/ScreenTouchBlocker.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/ScreenTouchBlocker.app.iml" />
     </modules>
   </component>
 </project>
