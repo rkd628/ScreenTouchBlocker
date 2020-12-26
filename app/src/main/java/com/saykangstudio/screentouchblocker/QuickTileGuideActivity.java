@@ -36,6 +36,10 @@ public class QuickTileGuideActivity extends Activity {
         final ImageView imageView = findViewById(R.id.GuideImage);
         AnimatedImageDrawable drawable = (AnimatedImageDrawable) imageView.getDrawable();
         drawable.start();
+
+        final ImageView imageView1 = findViewById(R.id.GuideImage1);
+        AnimatedImageDrawable drawable1 = (AnimatedImageDrawable) imageView1.getDrawable();
+        drawable1.start();
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 mTileServiceBroadcastReceiver, new IntentFilter(Utils.ACTION_QUICK_TILE_SETTING));
     }
